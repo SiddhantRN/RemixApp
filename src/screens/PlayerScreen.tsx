@@ -1,57 +1,42 @@
 import React, {useEffect, useState} from 'react';
-import {StyleSheet, View, Text, TouchableOpacity} from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  useAnimatedGestureHandler,
-  runOnJS,
-} from 'react-native-reanimated';
-import {
-  PanGestureHandler,
-  PanGestureHandlerGestureEvent,
-} from 'react-native-gesture-handler';
-import {snapPoint} from 'react-native-redash';
-import TrackPlayer, {State} from 'react-native-track-player';
+import {StyleSheet, View, Text, TouchableOpacity, Image} from 'react-native';
+import TrackPlayer, {State, RepeatMode} from 'react-native-track-player';
 import RNFetchBlob from 'rn-fetch-blob';
 var RNFS = require('react-native-fs');
+import {PermissionsAndroid} from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 
-import {BUTTON_PADDING, height, width} from '../Utils/constants';
-import {startDownload, requestToPermissions} from '../Utils/downloadAudio';
-import {freeSoundLogin} from '../services/Auth';
-import {
-  BUTTON_HEIGHT,
-  BUTTON_WIDTH,
-  SWIPEABLE_DIMENSIONS,
-  H_SWIPE_RANGE,
-  H_WAVE_RANGE,
-} from '../Utils/constants';
+import {height, width} from '../Utils/constants';
 import AudioButton from '../components/AudioButton';
-import Test from '../components/Test';
-
-// const SIZE = width * 0.1;
-const snapPointsX = [0, 0];
-// const snapPointsY = [height - 10 - SIZE, height - height * 0.2 + SIZE - 10];
-const snapPointsY = [0, -height * 0.15];
+import ProgressBar from '../components/progressBar';
 
 type ComponentProps = {};
 
 const tracks = [
   {
     id: 1,
-    url: 'https://res.cloudinary.com/dy71m2dro/video/upload/v1664697440/Remix%20app/346641__inspectorj__rain-on-windows-interior-b_kztywl.wav',
+    url: 'https://res.cloudinary.com/dy71m2dro/video/upload/v1664871529/Remix%20app/RainAudio_klitvo.wav',
     // url: 'https://res.cloudinary.com/dy71m2dro/video/upload/v1664697440/Remix%20app/346641__inspectorj__rain-on-windows-interior-b_kztywl.wav',
     title: 'RainSound',
   },
 ];
 
 const PlayerScreen = ({}: ComponentProps) => {
-  const translateX = useSharedValue(0);
-  const translateY = useSharedValue(0);
-
+  const [audioExists, setAudioExists] = useState(false);
+  const [downloadProgress, setdownloadProgress] = useState(0);
   useEffect(() => {
+    funcOne();
+
+    //check if file exists
+    //true - > setup Player ,enable button.
+    //false -> download it
+    // sucessful download -> setup player,enable button
     // setUpTrackPlayer();
   }, []);
+
+  const funcOne = async () => {
+    await checkAudioExists();
+  };
 
   const setUpTrackPlayer = async () => {
     try {
@@ -63,73 +48,105 @@ const PlayerScreen = ({}: ComponentProps) => {
     }
   };
 
-  const toggleStyle = useAnimatedStyle(() => ({
-    backgroundColor: '#F00',
-    width: SWIPEABLE_DIMENSIONS,
-    height: SWIPEABLE_DIMENSIONS,
-    aspectRatio: 1,
-    borderRadius: SWIPEABLE_DIMENSIONS / 2,
-    position: 'absolute',
-    zIndex: 3,
-    bottom: BUTTON_PADDING,
-    transform: [{translateX: translateX.value}, {translateY: translateY.value}],
-  }));
+  const checkAudioExists = () => {
+    RNFS.exists(`file:///storage/emulated/0/Download/rainAudio.wav`).then(
+      data => {
+        if (data == true) {
+          // setUpTrackPlayer();
+          setAudioExists(true);
+          console.log('audio does  exist', data);
+          setUpTrackPlayer();
+        } else if (data == false) {
+          setAudioExists(false);
+          console.log('audio does not exist', data);
+          requestToPermissions();
+        } else {
+          console.log('Outhers');
+        }
+      },
+    );
+  };
 
-  const handleChange = (isToggled: Boolean) => {
-    if (isToggled) {
-      // TrackPlayer.play();
-    } else {
-      // TrackPlayer.pause();
+  const requestToPermissions = async () => {
+    try {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+        {
+          title: 'Music',
+          message: 'App needs access to your Files... ',
+          buttonNeutral: 'Ask Me Later',
+          buttonNegative: 'Cancel',
+          buttonPositive: 'OK',
+        },
+      );
+      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        console.log('startDownload...');
+        startDownload();
+      }
+    } catch (err) {
+      console.log(err);
     }
   };
 
-  const onGestureEvent = useAnimatedGestureHandler<
-    PanGestureHandlerGestureEvent,
-    {x: number; y: number}
-  >({
-    onStart: (_event, ctx) => {
-      ctx.y = translateY.value;
-    },
-    onActive: ({translationX, translationY}, ctx) => {
-      translateY.value = ctx.y + translationY;
-    },
-    onEnd: ({translationY, translationX, velocityX, velocityY}) => {
-      if (translateY.value > -height * 0.075) {
-        translateY.value = withSpring(0);
-        // console.log('less');
-        // runOnJS(handleComplete)(false);
-      } else {
-        translateY.value = withSpring(-height * 0.15);
-        // runOnJS(handleComplete)(true);
-      }
+  const startDownload = () => {
+    console.log('downloading has started');
+    RNFetchBlob.config({
+      fileCache: true,
+      appendExt: 'wav',
+      path: RNFetchBlob.fs.dirs.DownloadDir + `/rainAudio.wav`,
+    })
+      .fetch(
+        'GET',
+        `https://cdn.freesound.org/sounds/531/531947-0c990bbb-a319-48e3-bd70-67bfa9f2f555?filename=531947__straget__the-rain-falls-against-the-parasol.wav`,
+        // `https://res.cloudinary.com/dy71m2dro/video/upload/v1664871529/Remix%20app/RainAudio_klitvo.wav`,
+      )
+      .progress({interval: 750}, (received, total) => {
+        // console.log('triggers');
+        console.log('progress', (received / total) * 100);
+        setdownloadProgress(received / total);
+      })
+      .then(res => {
+        console.log('res', res);
+        console.log('The file is save to ', res.path());
+        setAudioExists(true);
+        setUpTrackPlayer();
+      });
+  };
 
-      // const snapPointY = snapPoint(translateY.value, velocityY, snapPointsY);
-      // translateY.value = withSpring(
-      //   snapPointY,
-      //   {velocity: velocityY},
-      //   isFinished => {
-      //     if (translateY.value == 0) {
-      //       console.log('not finished', translateY.value);
-      //       runOnJS(setToggle)(false);
-      //       // runOnJS(PlayPause);
-      //     } else {
-      //       console.log('finished', translateY.value);
-      //       runOnJS(setToggle)(true);
-      //       // runOnJS(handleComplete);
-      //       // runOnJS(TrackPlayer.play());
-      //     }
-      //   },
-      // );
-      // console.log(translateY);
-    },
-  });
+  const handleChange = (value: boolean) => {
+    console.log(value);
+    if (value) {
+      // TrackPlayer.reset();
+      TrackPlayer.play();
+      TrackPlayer.setVolume(0.4);
+    } else {
+      TrackPlayer.pause();
+    }
+  };
+  const handleChangeVolume = (value: number) => {
+    console.log(value);
+    TrackPlayer.setVolume(value);
+  };
 
   return (
-    <View style={styles.container}>
-      <Text style={{marginTop: 40, fontSize: 20}}>Main Screen</Text>
-
-      <AudioButton handleChange={handleChange} />
-    </View>
+    <LinearGradient colors={['#2E335A', '#1C1B33']} style={styles.container}>
+      <Image
+        source={require('../assets/Rain.png')}
+        style={styles.image}
+        resizeMode={'contain'}
+      />
+      {audioExists ? (
+        <AudioButton
+          handleChange={handleChange}
+          handleChangeVolume={handleChangeVolume}
+        />
+      ) : (
+        <ProgressBar progress={downloadProgress} />
+      )}
+      {/* <View style={{position: 'absolute', bottom: 60}}>
+        <ProgressBar progress={downloadProgress} />
+      </View> */}
+    </LinearGradient>
   );
 };
 
@@ -138,39 +155,12 @@ const styles = StyleSheet.create({
     flex: 1,
     height: height,
     width: width,
-  },
-  box: {
-    position: 'absolute',
-    bottom: 20,
-    left: 20,
-    height: height * 0.07,
-    width: height * 0.07,
-    borderRadius: height * 0.035,
-    backgroundColor: 'yellow',
-  },
-  songButton: {
-    // position: 'absolute',
-    // bottom: 20,
-    // left: 20,
-    // height: height * 0.07,
-    // width: height * 0.07,
-    borderRadius: height * 0.035,
-    flex: 1,
-    backgroundColor: 'pink',
-  },
-  musicToggle: {
-    flexDirection: 'column',
-    height: BUTTON_HEIGHT,
-    width: BUTTON_WIDTH,
-    backgroundColor: 'pink',
-    borderRadius: BUTTON_WIDTH,
-    // padding: BUTTON_PADDING,
     alignItems: 'center',
-    justifyContent: 'flex-end',
-    position: 'absolute',
-    // bottom: 600,
-    bottom: 10,
-    left: 10,
+  },
+  image: {
+    marginTop: height * 0.1,
+    height: height * 0.2,
+    width: height * 0.2,
   },
 });
 
