@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {StyleSheet, View, Text, TouchableOpacity, Image} from 'react-native';
+import {StyleSheet, ActivityIndicator, Image, View} from 'react-native';
 import TrackPlayer, {State, RepeatMode} from 'react-native-track-player';
 import RNFetchBlob from 'rn-fetch-blob';
 var RNFS = require('react-native-fs');
@@ -15,7 +15,8 @@ type ComponentProps = {};
 const tracks = [
   {
     id: 1,
-    url: 'https://res.cloudinary.com/dy71m2dro/video/upload/v1664871529/Remix%20app/RainAudio_klitvo.wav',
+    // url: 'https://res.cloudinary.com/dy71m2dro/video/upload/v1664871529/Remix%20app/RainAudio_klitvo.wav',
+    url: `file:///storage/emulated/0/Download/rainAudio.wav`,
     // url: 'https://res.cloudinary.com/dy71m2dro/video/upload/v1664697440/Remix%20app/346641__inspectorj__rain-on-windows-interior-b_kztywl.wav',
     title: 'RainSound',
   },
@@ -23,6 +24,7 @@ const tracks = [
 
 const PlayerScreen = ({}: ComponentProps) => {
   const [audioExists, setAudioExists] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [downloadProgress, setdownloadProgress] = useState(0);
   useEffect(() => {
     funcOne();
@@ -42,6 +44,7 @@ const PlayerScreen = ({}: ComponentProps) => {
     try {
       await TrackPlayer.setupPlayer();
       await TrackPlayer.add(tracks);
+      await TrackPlayer.setRepeatMode(RepeatMode.Track);
       console.log('Tracks added');
     } catch (e) {
       console.log(e);
@@ -56,7 +59,9 @@ const PlayerScreen = ({}: ComponentProps) => {
           setAudioExists(true);
           console.log('audio does  exist', data);
           setUpTrackPlayer();
+          setLoading(false);
         } else if (data == false) {
+          setLoading(false);
           setAudioExists(false);
           console.log('audio does not exist', data);
           requestToPermissions();
@@ -97,8 +102,8 @@ const PlayerScreen = ({}: ComponentProps) => {
     })
       .fetch(
         'GET',
-        `https://cdn.freesound.org/sounds/531/531947-0c990bbb-a319-48e3-bd70-67bfa9f2f555?filename=531947__straget__the-rain-falls-against-the-parasol.wav`,
-        // `https://res.cloudinary.com/dy71m2dro/video/upload/v1664871529/Remix%20app/RainAudio_klitvo.wav`,
+        // `https://cdn.freesound.org/sounds/531/531947-0c990bbb-a319-48e3-bd70-67bfa9f2f555?filename=531947__straget__the-rain-falls-against-the-parasol.wav`,
+        `https://res.cloudinary.com/dy71m2dro/video/upload/v1664871529/Remix%20app/RainAudio_klitvo.wav`,
       )
       .progress({interval: 750}, (received, total) => {
         // console.log('triggers');
@@ -135,7 +140,9 @@ const PlayerScreen = ({}: ComponentProps) => {
         style={styles.image}
         resizeMode={'contain'}
       />
-      {audioExists ? (
+      {loading ? (
+        <ActivityIndicator />
+      ) : audioExists ? (
         <AudioButton
           handleChange={handleChange}
           handleChangeVolume={handleChangeVolume}
@@ -143,6 +150,7 @@ const PlayerScreen = ({}: ComponentProps) => {
       ) : (
         <ProgressBar progress={downloadProgress} />
       )}
+
       {/* <View style={{position: 'absolute', bottom: 60}}>
         <ProgressBar progress={downloadProgress} />
       </View> */}

@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
 } from 'react-native-gesture-handler';
 import Fontisto from 'react-native-vector-icons/Fontisto';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 import {
@@ -131,14 +132,27 @@ const AudioButton = ({handleChange, handleChangeVolume}) => {
     <View style={styles.musicToggle}>
       {volumeOn && (
         <View style={styles.volume}>
-          <View style={{position: 'absolute', top: 5}}>
+          <View style={{position: 'absolute', top: 10}}>
             <Ionicons name={'volume-medium'} size={24} color={'#EDE7F6'} />
           </View>
-          <View style={{position: 'absolute', bottom: 5}}>
+          <View style={{position: 'absolute', bottom: 10}}>
             <Ionicons name={'volume-low'} size={24} color={'#EDE7F6'} />
           </View>
         </View>
       )}
+      <View
+        style={{
+          position: 'absolute',
+          bottom: 10,
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}>
+        <MaterialCommunityIcons
+          name={'volume-mute'}
+          size={26}
+          color={'#EDE7F6'}
+        />
+      </View>
       <PanGestureHandler onGestureEvent={onGestureEvent}>
         <Animated.View style={toggleStyle}>
           <Fontisto name={'blood-drop'} size={24} color={'#48319D'} />
