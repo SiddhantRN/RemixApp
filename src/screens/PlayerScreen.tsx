@@ -1,14 +1,20 @@
 import React, {useEffect, useState} from 'react';
-import {StyleSheet, ActivityIndicator, Image, View} from 'react-native';
+import {
+  StyleSheet,
+  ActivityIndicator,
+  Image,
+  View,
+  TouchableOpacity,
+} from 'react-native';
 import TrackPlayer, {State, RepeatMode} from 'react-native-track-player';
-import RNFetchBlob from 'rn-fetch-blob';
 var RNFS = require('react-native-fs');
-import {PermissionsAndroid} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 
 import {height, width} from '../Utils/constants';
 import AudioButton from '../components/AudioButton';
 import ProgressBar from '../components/progressBar';
+import {downloadAudioUrl, localStorageUrl} from '../Utils/urls';
+import {requestToPermissions} from '../Utils/helpers';
 
 type ComponentProps = {};
 
@@ -16,27 +22,23 @@ const tracks = [
   {
     id: 1,
     // url: 'https://res.cloudinary.com/dy71m2dro/video/upload/v1664871529/Remix%20app/RainAudio_klitvo.wav',
-    url: `file:///storage/emulated/0/Download/rainAudio.wav`,
-    // url: 'https://res.cloudinary.com/dy71m2dro/video/upload/v1664697440/Remix%20app/346641__inspectorj__rain-on-windows-interior-b_kztywl.wav',
+    url: localStorageUrl,
     title: 'RainSound',
   },
 ];
 
-const PlayerScreen = ({}: ComponentProps) => {
-  const [audioExists, setAudioExists] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [downloadProgress, setdownloadProgress] = useState(0);
+const PlayerScreen: React.FC<ComponentProps> = ({}) => {
+  const [audioExists, setAudioExists] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [downloadProgress, setdownloadProgress] = useState<number>(0);
   useEffect(() => {
-    funcOne();
-
+    lifeCycleFunc();
     //check if file exists
     //true - > setup Player ,enable button.
-    //false -> download it
-    // sucessful download -> setup player,enable button
-    // setUpTrackPlayer();
+    //false -> download it -> sucessful download -> setup player,enable button
   }, []);
 
-  const funcOne = async () => {
+  const lifeCycleFunc = async () => {
     await checkAudioExists();
   };
 
@@ -52,76 +54,30 @@ const PlayerScreen = ({}: ComponentProps) => {
   };
 
   const checkAudioExists = () => {
-    RNFS.exists(`file:///storage/emulated/0/Download/rainAudio.wav`).then(
-      data => {
-        if (data == true) {
-          // setUpTrackPlayer();
-          setAudioExists(true);
-          console.log('audio does  exist', data);
-          setUpTrackPlayer();
-          setLoading(false);
-        } else if (data == false) {
-          setLoading(false);
-          setAudioExists(false);
-          console.log('audio does not exist', data);
-          requestToPermissions();
-        } else {
-          console.log('Outhers');
-        }
-      },
-    );
-  };
-
-  const requestToPermissions = async () => {
-    try {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-        {
-          title: 'Music',
-          message: 'App needs access to your Files... ',
-          buttonNeutral: 'Ask Me Later',
-          buttonNegative: 'Cancel',
-          buttonPositive: 'OK',
-        },
-      );
-      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-        console.log('startDownload...');
-        startDownload();
-      }
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
-  const startDownload = () => {
-    console.log('downloading has started');
-    RNFetchBlob.config({
-      fileCache: true,
-      appendExt: 'wav',
-      path: RNFetchBlob.fs.dirs.DownloadDir + `/rainAudio.wav`,
-    })
-      .fetch(
-        'GET',
-        // `https://cdn.freesound.org/sounds/531/531947-0c990bbb-a319-48e3-bd70-67bfa9f2f555?filename=531947__straget__the-rain-falls-against-the-parasol.wav`,
-        `https://res.cloudinary.com/dy71m2dro/video/upload/v1664871529/Remix%20app/RainAudio_klitvo.wav`,
-      )
-      .progress({interval: 750}, (received, total) => {
-        // console.log('triggers');
-        console.log('progress', (received / total) * 100);
-        setdownloadProgress(received / total);
-      })
-      .then(res => {
-        console.log('res', res);
-        console.log('The file is save to ', res.path());
+    RNFS.exists(localStorageUrl).then(data => {
+      if (data == true) {
         setAudioExists(true);
+        console.log('audio does  exist', data);
         setUpTrackPlayer();
-      });
+        setLoading(false);
+      } else if (data == false) {
+        setLoading(false);
+        setAudioExists(false);
+        console.log('audio does not exist', data);
+        requestToPermissions(
+          setdownloadProgress,
+          setAudioExists,
+          setUpTrackPlayer,
+        );
+      } else {
+        console.log('Outhers');
+      }
+    });
   };
 
   const handleChange = (value: boolean) => {
     console.log(value);
     if (value) {
-      // TrackPlayer.reset();
       TrackPlayer.play();
       TrackPlayer.setVolume(0.4);
     } else {
@@ -150,10 +106,11 @@ const PlayerScreen = ({}: ComponentProps) => {
       ) : (
         <ProgressBar progress={downloadProgress} />
       )}
-
-      {/* <View style={{position: 'absolute', bottom: 60}}>
-        <ProgressBar progress={downloadProgress} />
-      </View> */}
+      {/* <TouchableOpacity
+        style={{height: 50, width: 50, backgroundColor: 'pink'}}
+        onPress={() =>
+          console.log(localStorageUrl, 'and', downloadAudioUrl)
+        }></TouchableOpacity> */}
     </LinearGradient>
   );
 };

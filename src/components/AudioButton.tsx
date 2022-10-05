@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState} from 'react';
 import {View, StyleSheet} from 'react-native';
 import Animated, {
   useSharedValue,
@@ -10,7 +10,6 @@ import Animated, {
 import {
   PanGestureHandler,
   PanGestureHandlerGestureEvent,
-  TouchableOpacity,
 } from 'react-native-gesture-handler';
 import Fontisto from 'react-native-vector-icons/Fontisto';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -20,18 +19,19 @@ import {
   SWIPEABLE_DIMENSIONS,
   BUTTON_PADDING,
   height,
-  width,
-  BUTTON_HEIGHT,
   BUTTON_WIDTH,
 } from '../Utils/constants';
 
-type AppProps = {
-  name: string;
-  onPressButton: (name: string) => void;
+type ComponentProps = {
+  handleChange: (value: boolean) => void;
+  handleChangeVolume: (volume: number) => void;
 };
 
-const AudioButton = ({handleChange, handleChangeVolume}) => {
-  const [volumeOn, setVolumeOn] = useState(false);
+const AudioButton: React.FC<ComponentProps> = ({
+  handleChange,
+  handleChangeVolume,
+}) => {
+  const [volumeOn, setVolumeOn] = useState<boolean>(false);
   const translateX = useSharedValue(0);
   const translateY = useSharedValue(0);
 
@@ -140,13 +140,7 @@ const AudioButton = ({handleChange, handleChangeVolume}) => {
           </View>
         </View>
       )}
-      <View
-        style={{
-          position: 'absolute',
-          bottom: 10,
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}>
+      <View style={styles.volumeOff}>
         <MaterialCommunityIcons
           name={'volume-mute'}
           size={26}
@@ -165,19 +159,13 @@ const AudioButton = ({handleChange, handleChangeVolume}) => {
 const styles = StyleSheet.create({
   musicToggle: {
     flexDirection: 'column',
-    // height: BUTTON_HEIGHT,
     height: height * 0.45,
     width: BUTTON_WIDTH,
-    // backgroundColor: 'pink',
     borderRadius: BUTTON_WIDTH,
-    // padding: BUTTON_PADDING,
     alignItems: 'center',
     justifyContent: 'flex-end',
     position: 'absolute',
-    // bottom: 600,
     bottom: 10,
-    // left: 0,
-    // right: 0,
   },
   volume: {
     flexDirection: 'column',
@@ -192,6 +180,12 @@ const styles = StyleSheet.create({
     borderColor: '#6c4ace',
     elevation: 3,
     top: 0,
+  },
+  volumeOff: {
+    position: 'absolute',
+    bottom: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

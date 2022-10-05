@@ -1,27 +1,16 @@
-import React, {useState, useEffect} from 'react';
-import {View} from 'react-native';
+import React from 'react';
+import {View, StyleSheet} from 'react-native';
 import * as Progress from 'react-native-progress';
 import Fontisto from 'react-native-vector-icons/Fontisto';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import {SWIPEABLE_DIMENSIONS} from '../Utils/constants';
 
 type AppProps = {
   progress: number;
 };
 
-const ProgressBar = ({progress}: AppProps) => {
+const ProgressBar: React.FC<AppProps> = ({progress}) => {
   return (
-    <View
-      style={{
-        height: SWIPEABLE_DIMENSIONS,
-        width: SWIPEABLE_DIMENSIONS,
-        borderRadius: SWIPEABLE_DIMENSIONS,
-        position: 'absolute',
-        bottom: 10,
-        justifyContent: 'center',
-        alignItems: 'center',
-        // backgroundColor: 'pink',
-      }}>
+    <View style={styles.container}>
       <Progress.Circle
         progress={progress}
         thickness={2}
@@ -33,26 +22,36 @@ const ProgressBar = ({progress}: AppProps) => {
           backgroundColor: '#EDE7F6',
           borderRadius: SWIPEABLE_DIMENSIONS / 2,
         }}>
-        <View
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: SWIPEABLE_DIMENSIONS,
-            width: SWIPEABLE_DIMENSIONS,
-            borderRadius: SWIPEABLE_DIMENSIONS,
-            // backgroundColor: '#EDE7F6',
-          }}>
+        <View style={styles.iconContainer}>
           <Fontisto name={'blood-drop'} size={24} color={'#48319D'} />
-          {/* <Ionicons name={'rainy'} size={20} color={'#48319D'} /> */}
         </View>
       </Progress.Circle>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    height: SWIPEABLE_DIMENSIONS,
+    width: SWIPEABLE_DIMENSIONS,
+    borderRadius: SWIPEABLE_DIMENSIONS,
+    position: 'absolute',
+    bottom: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  iconContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: SWIPEABLE_DIMENSIONS,
+    width: SWIPEABLE_DIMENSIONS,
+    borderRadius: SWIPEABLE_DIMENSIONS,
+  },
+});
 
 export default ProgressBar;
